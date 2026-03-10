@@ -748,8 +748,8 @@
     position: absolute;
     top: 8px;
     left: 8px;
-    background: #1A1A18;
-    color: #fff;
+    background: #fff;
+    color: var(--ink);
     font-size: 10px;
     font-family: 'DM Mono', monospace;
     font-weight: 500;
@@ -759,8 +759,33 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.15);
   }
   .qty-badge.qty-multi {
+    background: #fff;
+    color: var(--ink);
+  }
+  .broken-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
     background: #1A1A18;
     color: #fff;
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    text-transform: uppercase;
+  }
+  .chip-broken {
+    background: #6B6860 !important;
+    color: #fff !important;
+    border-color: #4A4A48 !important;
+  }
+  .chip-broken.active {
+    background: #1A1A18 !important;
+    color: #fff !important;
+    border-color: #000 !important;
   }
 
   /* color dropdown */
@@ -1440,6 +1465,14 @@
         </div>
       </div>
 
+    <div class="sidebar-section">
+      <div class="sidebar-label">Condition</div>
+      <div class="chip-group" id="broken-filters">
+        <button class="chip active" data-broken="all">All</button>
+        <button class="chip chip-broken" data-broken="broken">Broken</button>
+      </div>
+    </div>
+
     <button class="reset-btn" id="reset">↺ Reset all filters</button>
     </aside>
   </div><!-- /sidebar-col -->
@@ -1592,7 +1625,8 @@ let state = {
   minSize: null,
   maxSize: null,
   sort: 'default',
-  dimField: 'diameter'
+  dimField: 'diameter',
+  broken: 'all'
 };
 
 // ─────────────────────────────────────────────
@@ -1619,6 +1653,9 @@ function matches(v) {
   if (state.qty === '1'  && vqty !== 1)  return false;
   if (state.qty === '2'  && vqty !== 2)  return false;
   if (state.qty === '3+' && vqty < 3)    return false;
+
+  if (state.broken === 'broken' && !v.broken) return false;
+  if (state.broken === 'all' && false) {} // no-op
 
   if (state.search) {
     const q = state.search.toLowerCase();
@@ -1676,7 +1713,7 @@ function render() {
     <div class="card" data-id="${v.id}" style="animation-delay:${Math.min(i*0.03, 0.4)}s">
       <div class="card-img">
         ${imgPath ? `<img class="lazy-img" data-src="${imgPath}" alt="${v.name}" style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.2s">` : ""}
-        ${(v.qty||1) > 1 ? `<div class="qty-badge qty-multi">X ${v.qty||1}</div>` : ""}
+        ${v.broken ? `<div class="broken-badge">X</div>` : (v.qty||1) > 1 ? `<div class="qty-badge qty-multi">× ${v.qty||1}</div>` : ""}
         <button class="btn-replace-photo" title="Replace photo" onclick="replacePhoto('${v.id}', event)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <div class="card-img-placeholder" style="display:${imgPath ? 'none' : 'flex'}">
           <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -1765,6 +1802,7 @@ function bindChips(groupId, stateKey, dataAttr) {
 }
 
 bindChips('cat-filters',   'category', 'cat');
+bindChips('broken-filters', 'broken', 'broken');
 const COLOR_BORDER = {
     'Red': '#D94040', 'Green': '#4CAF50', 'Yellow/Orange': '#FFA726',
     'Pink/Purple': '#CE93D8', 'Beige/Brown': '#BCAAA4', 'Blue': '#42A5F5',
@@ -1849,7 +1887,7 @@ document.getElementById('max-size').addEventListener('input', e => {
 });
 
 document.getElementById('reset').addEventListener('click', () => {
-  state = { search:'', category:'all', color:'', size:'all', qty:'all', minSize:null, maxSize:null, sort:'default', dimField:'diameter' };
+  state = { search:'', category:'all', color:'', size:'all', qty:'all', minSize:null, maxSize:null, sort:'default', dimField:'diameter', broken:'all' };
   document.getElementById('search').value = '';
   document.getElementById('min-size').value = '';
   document.getElementById('max-size').value = '';
