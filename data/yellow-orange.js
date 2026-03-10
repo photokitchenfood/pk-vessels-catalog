@@ -473,7 +473,8 @@ vessels = [
     "category": "Ramekins",
     "name": "Round Ramekin, Glossy Orange Ceramic, Smooth Glaze, Very Shallow Sauce Dish",
     "diameter": 6.7,
-    "height": 2.5
+    "height": 2.5,
+    "broken": true
   },
   {
     "id": "yo-r-12",
