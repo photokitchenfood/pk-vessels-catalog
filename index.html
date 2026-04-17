@@ -762,31 +762,6 @@
     background: #fff;
     color: var(--ink);
   }
-  .broken-badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    background: #1A1A18;
-    color: #fff;
-    font-size: 10px;
-    font-family: 'DM Mono', monospace;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 3px;
-    letter-spacing: 0.08em;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-    text-transform: uppercase;
-  }
-  .chip-broken {
-    background: #6B6860 !important;
-    color: #fff !important;
-    border-color: #4A4A48 !important;
-  }
-  .chip-broken.active {
-    background: #1A1A18 !important;
-    color: #fff !important;
-    border-color: #000 !important;
-  }
 
   /* color dropdown */
   .color-select-wrap {
@@ -1098,71 +1073,13 @@
   .modal-dims-row .add-modal-section { margin-bottom: 0; }
   .modal-qty-notes-row {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: calc(25% - 7.5px) auto;
     gap: 10px;
     margin-top: 10px;
     margin-bottom: 14px;
-    align-items: end;
   }
-  .modal-qty-field { grid-column: span 1; margin-bottom: 0 !important; display: flex; flex-direction: column; justify-content: flex-end; }
-  .modal-broken-field { grid-column: span 1; margin-bottom: 0 !important; display: flex; flex-direction: column; justify-content: flex-end; }
-  .modal-notes-field { grid-column: span 6; margin-bottom: 0 !important; display: flex; flex-direction: column; justify-content: flex-end; }
-  .broken-check-wrap {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    box-sizing: border-box;
-    cursor: pointer;
-    user-select: none;
-    margin-bottom: 0 !important;
-  }
-  .broken-field-label {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    margin-bottom: 6px;
-    font-family: 'DM Mono', monospace;
-    pointer-events: none;
-  }
-  .broken-check-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 33px;
-    width: 100%;
-    border: 1.5px solid var(--tag-border);
-    border-radius: var(--radius);
-    background: var(--bg);
-    transition: border-color 0.15s, background 0.15s;
-  }
-  .broken-check-wrap:hover .broken-check-box {
-    border-color: var(--ink-faint);
-  }
-  .broken-check-wrap:has(input:checked) .broken-check-box {
-    border-color: var(--ink);
-    background: var(--ink);
-  }
-  /* hover/checked handled by .broken-check-box rules above */
-  .broken-check-wrap input[type="checkbox"] {
-    display: none;
-  }
-  .broken-check-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    color: var(--ink-faint);
-    transition: color 0.15s;
-  }
-  .broken-check-wrap:has(input:checked) .broken-check-label {
-    color: #fff;
-  }
-  input[type="number"].qty-disabled {
-    opacity: 0.35;
-    pointer-events: none;
-  }
+  .modal-qty-field,
+  .modal-notes-field { margin-bottom: 0 !important; }
 
   /* Photo area — natural aspect ratio once image loaded */
   .add-photo-area.has-photo,
@@ -1249,7 +1166,6 @@
     box-sizing: border-box;
     font-family: 'DM Mono', monospace;
     font-size: 12px;
-    line-height: 14px;
     padding: 8px 10px;
     border: 1.5px solid var(--tag-border);
     border-radius: var(--radius);
@@ -1298,13 +1214,6 @@
   .add-modal-section select:focus {
     border-color: var(--ink);
   }
-  /* Remove number input spinners in modals */
-  .add-modal-section input[type="number"]::-webkit-inner-spin-button,
-  .add-modal-section input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  .add-modal-section input[type="number"] { -moz-appearance: textfield; }
   .add-dims-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1531,14 +1440,6 @@
         </div>
       </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-label">Condition</div>
-      <div class="chip-group" id="broken-filters">
-        <button class="chip active" data-broken="all">All</button>
-        <button class="chip chip-broken" data-broken="broken">Broken</button>
-      </div>
-    </div>
-
     <button class="reset-btn" id="reset">↺ Reset all filters</button>
     </aside>
   </div><!-- /sidebar-col -->
@@ -1691,8 +1592,7 @@ let state = {
   minSize: null,
   maxSize: null,
   sort: 'default',
-  dimField: 'diameter',
-  broken: 'all'
+  dimField: 'diameter'
 };
 
 // ─────────────────────────────────────────────
@@ -1719,9 +1619,6 @@ function matches(v) {
   if (state.qty === '1'  && vqty !== 1)  return false;
   if (state.qty === '2'  && vqty !== 2)  return false;
   if (state.qty === '3+' && vqty < 3)    return false;
-
-  if (state.broken === 'broken' && !v.broken) return false;
-  if (state.broken === 'all' && false) {} // no-op
 
   if (state.search) {
     const q = state.search.toLowerCase();
@@ -1779,7 +1676,7 @@ function render() {
     <div class="card" data-id="${v.id}" style="animation-delay:${Math.min(i*0.03, 0.4)}s">
       <div class="card-img">
         ${imgPath ? `<img class="lazy-img" data-src="${imgPath}" alt="${v.name}" style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.2s">` : ""}
-        ${v.broken ? `<div class="broken-badge">X</div>` : (v.qty||1) > 1 ? `<div class="qty-badge qty-multi">× ${v.qty||1}</div>` : ""}
+        ${(v.qty||1) > 1 ? `<div class="qty-badge qty-multi">× ${v.qty||1}</div>` : ""}
         <button class="btn-replace-photo" title="Replace photo" onclick="replacePhoto('${v.id}', event)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <div class="card-img-placeholder" style="display:${imgPath ? 'none' : 'flex'}">
           <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -1868,7 +1765,6 @@ function bindChips(groupId, stateKey, dataAttr) {
 }
 
 bindChips('cat-filters',   'category', 'cat');
-bindChips('broken-filters', 'broken', 'broken');
 const COLOR_BORDER = {
     'Red': '#D94040', 'Green': '#4CAF50', 'Yellow/Orange': '#FFA726',
     'Pink/Purple': '#CE93D8', 'Beige/Brown': '#BCAAA4', 'Blue': '#42A5F5',
@@ -1953,7 +1849,7 @@ document.getElementById('max-size').addEventListener('input', e => {
 });
 
 document.getElementById('reset').addEventListener('click', () => {
-  state = { search:'', category:'all', color:'', size:'all', qty:'all', minSize:null, maxSize:null, sort:'default', dimField:'diameter', broken:'all' };
+  state = { search:'', category:'all', color:'', size:'all', qty:'all', minSize:null, maxSize:null, sort:'default', dimField:'diameter' };
   document.getElementById('search').value = '';
   document.getElementById('min-size').value = '';
   document.getElementById('max-size').value = '';
@@ -2074,13 +1970,6 @@ render();
         <label>Qty</label>
         <input type="number" id="edit-qty" placeholder="1" step="1" min="1" value="1">
       </div>
-      <div class="add-modal-section modal-broken-field">
-        <label class="broken-check-wrap">
-          <input type="checkbox" id="edit-broken">
-          <span class="broken-field-label">Broken</span>
-          <div class="broken-check-box"><span class="broken-check-label"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg></span></div>
-        </label>
-      </div>
       <div class="add-modal-section modal-notes-field">
         <label>Notes</label>
         <input type="text" id="edit-notes" placeholder="e.g. Fragile, handle with care">
@@ -2182,13 +2071,6 @@ render();
         <div class="add-modal-section modal-qty-field">
           <label>Qty</label>
           <input type="number" id="add-qty" placeholder="1" step="1" min="1" value="1">
-        </div>
-        <div class="add-modal-section modal-broken-field">
-          <label class="broken-check-wrap">
-            <span class="broken-field-label">Broken</span>
-            <input type="checkbox" id="add-broken">
-            <div class="broken-check-box"><span class="broken-check-label"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg></span></div>
-          </label>
         </div>
         <div class="add-modal-section modal-notes-field">
           <label>Notes</label>
@@ -2469,13 +2351,6 @@ function replacePhoto(vesselId, event) {
   // Qty & notes
   document.getElementById('edit-qty').value = v.qty != null ? v.qty : 1;
   document.getElementById('edit-notes').value = v.notes || '';
-  const editBrokenCb = document.getElementById('edit-broken');
-  editBrokenCb.checked = !!v.broken;
-  const editQtyInput = document.getElementById('edit-qty');
-  editQtyInput.classList.toggle('qty-disabled', !!v.broken);
-  editBrokenCb.onchange = function() {
-    editQtyInput.classList.toggle('qty-disabled', this.checked);
-  };
 
   document.getElementById('edit-modal-overlay').classList.add('open');
 }
@@ -2503,8 +2378,6 @@ function saveAndExport() {
   // Save qty & notes
   const newQty = parseInt(document.getElementById('edit-qty').value);
   if (!isNaN(newQty) && newQty > 0) v.qty = newQty; else delete v.qty;
-  const newBroken = document.getElementById('edit-broken').checked;
-  if (newBroken) { v.broken = true; delete v.qty; } else { delete v.broken; }
   const newNotes = document.getElementById('edit-notes').value.trim();
   if (newNotes) v.notes = newNotes; else delete v.notes;
 
@@ -2592,6 +2465,13 @@ function saveAndExport() {
   const sl = getSizeLabel(v);
   const badge = document.querySelector('[data-id="' + editTargetId + '"] .size-badge');
   if (badge) { badge.className = 'size-badge ' + sl; badge.textContent = getSizeLabelText(sl); }
+
+  // Update category tag on card
+  const cardEl = document.querySelector('[data-id="' + editTargetId + '"]');
+  if (cardEl && newCat) {
+    const tags = cardEl.querySelectorAll('.card-tags .tag:not(.color-tag)');
+    if (tags.length > 0) tags[0].textContent = newCat;
+  }
 
   closeEditModal();
 }
@@ -2725,12 +2605,6 @@ function autoGrow(el) {
     }
     document.getElementById('add-modal-overlay').classList.add('open');
     updateIdPreview();
-    // Wire broken toggle for add modal
-    const addBrokenCb = document.getElementById('add-broken');
-    const addQtyInput = document.getElementById('add-qty');
-    addBrokenCb.onchange = function() {
-      addQtyInput.classList.toggle('qty-disabled', this.checked);
-    };
   });
 
   // Close modal
@@ -2754,8 +2628,6 @@ function autoGrow(el) {
     document.getElementById('add-width').value = '';
     document.getElementById('add-height').value = '';
     document.getElementById('add-qty').value = '1';
-    document.getElementById('add-qty').classList.remove('qty-disabled');
-    document.getElementById('add-broken').checked = false;
     document.getElementById('add-notes').value = '';
     document.getElementById('add-photo-input').value = '';
     document.getElementById('add-photo-preview').style.display = 'none';
@@ -2959,7 +2831,6 @@ function autoGrow(el) {
     const height   = parseFloat(document.getElementById('add-height').value)    || null;
     const qty      = parseInt(document.getElementById('add-qty').value, 10) || 1;
     const notes    = document.getElementById('add-notes').value.trim() || null;
-    const broken   = document.getElementById('add-broken').checked;
 
     // Build vessel object
     const vessel = { id, color, category, name };
@@ -2967,8 +2838,7 @@ function autoGrow(el) {
     if (length)   vessel.length   = length;
     if (width)    vessel.width    = width;
     if (height)   vessel.height   = height;
-    if (!broken && qty > 1) vessel.qty = qty;
-    if (broken)   vessel.broken   = true;
+    if (qty > 1)  vessel.qty      = qty;
     if (notes)    vessel.notes    = notes;
 
     // Add to vessels array
