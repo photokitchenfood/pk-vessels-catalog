@@ -1721,12 +1721,13 @@ function matches(v) {
   const dim = getPrimaryDim(v);
   const sizeLabel = getSizeLabel(v);
 
-  // Broken filter
+  // Archive filter chip — show only broken
   if (state.category === 'broken') {
     if (!v.broken) return false;
   } else {
-    if (v.broken) return false; // hide broken from all other views
-    if (state.category !== 'all' && v.category !== state.category) return false;
+    // Normal views: apply category filter to non-broken; broken vessels pass through to show at end
+    if (!v.broken && state.category !== 'all' && v.category !== state.category) return false;
+    if (v.broken && state.category !== 'all') return false; // archived only show under 'All'
   }
 
   if (state.color && v.color !== state.color) return false;
@@ -1757,11 +1758,17 @@ function matches(v) {
 }
 
 function sorted(list) {
-  const copy = [...list];
-  if (state.sort === 'size-asc')  return copy.sort((a,b) => getPrimaryDim(a) - getPrimaryDim(b));
-  if (state.sort === 'size-desc') return copy.sort((a,b) => getPrimaryDim(b) - getPrimaryDim(a));
-  if (state.sort === 'cat')       return copy.sort((a,b) => a.category.localeCompare(b.category));
-  return copy;
+  // Always push archived vessels to the end
+  const active   = list.filter(v => !v.broken);
+  const archived = list.filter(v =>  v.broken);
+  function sort(arr) {
+    const copy = [...arr];
+    if (state.sort === 'size-asc')  return copy.sort((a,b) => getPrimaryDim(a) - getPrimaryDim(b));
+    if (state.sort === 'size-desc') return copy.sort((a,b) => getPrimaryDim(b) - getPrimaryDim(a));
+    if (state.sort === 'cat')       return copy.sort((a,b) => a.category.localeCompare(b.category));
+    return copy;
+  }
+  return [...sort(active), ...sort(archived)];
 }
 
 // ─────────────────────────────────────────────
@@ -1801,8 +1808,14 @@ function render() {
   }
   colorHeaderText.innerHTML = breadcrumb;
 
-  const filtered = sorted(vessels.filter(matches));
-  count.innerHTML = `<span>${filtered.length}</span> vessel${filtered.length !== 1 ? 's' : ''}`;
+  const filtered  = sorted(vessels.filter(matches));
+  const activeCount   = filtered.filter(v => !v.broken).length;
+  const archivedCount = filtered.filter(v =>  v.broken).length;
+  let countHtml = `<span>${activeCount}</span> vessel${activeCount !== 1 ? 's' : ''}`;
+  if (archivedCount > 0 && state.category !== 'broken') {
+    countHtml += ` <span style="color:var(--ink-faint);font-weight:400;">/ ${archivedCount} archived</span>`;
+  }
+  count.innerHTML = countHtml;
 
   if (!filtered.length) {
     grid.innerHTML = '';
