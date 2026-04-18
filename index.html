@@ -297,7 +297,7 @@
   .archived-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,0.30);
+    background: rgba(0,0,0,0.50);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1176,7 +1176,7 @@
   .broken-check-input { display: none; }
   .broken-check-box {
     width: 100%;
-    height: 32px;
+    height: 34px;
     border: 1.5px solid var(--tag-border);
     border-radius: var(--radius);
     background: var(--bg);
@@ -1186,6 +1186,7 @@
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
     color: var(--ink-faint);
+    box-sizing: border-box;
   }
   .broken-check-input:checked ~ .broken-check-box {
     background: var(--ink);
@@ -1792,7 +1793,7 @@ function render() {
   // Build breadcrumb parts
   let breadcrumb = `<span style="color:${headerColor}">${state.color}</span>`;
   if (state.category && state.category !== 'all') {
-    breadcrumb += ` <span style="font-size:18px;font-weight:500;color:var(--ink);"> / ${state.category === 'broken' ? 'Broken' : state.category}</span>`;
+    breadcrumb += ` <span style="font-family:'Syne',sans-serif;font-size:18px;font-weight:500;color:var(--ink);"> / ${state.category === 'broken' ? 'Archive' : state.category}</span>`;
   }
   if (state.size && state.size !== 'all') {
     const sizeText = { small: 'Small (<15cm)', medium: 'Medium (15–25cm)', large: 'Large (25–35cm)', xlarge: 'X-Large (>35cm)', nodims: 'No Size' }[state.size] || state.size;
@@ -1820,7 +1821,7 @@ function render() {
     <div class="card" data-id="${v.id}" style="animation-delay:${Math.min(i*0.03, 0.4)}s">
       <div class="card-img">
         ${imgPath ? `<img class="lazy-img" data-src="${imgPath}" alt="${v.name}" style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.2s">` : ""}
-        ${v.broken ? `<div class="broken-badge">Archive</div><div class="archived-overlay"><svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="8" y1="8" x2="32" y2="32"/><line x1="32" y1="8" x2="8" y2="32"/></svg></div>` : (v.qty||1) > 1 ? `<div class="qty-badge qty-multi">× ${v.qty||1}</div>` : ""}
+        ${v.broken ? `<div class="archived-overlay"><svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="8" y1="8" x2="32" y2="32"/><line x1="32" y1="8" x2="8" y2="32"/></svg></div>` : (v.qty||1) > 1 ? `<div class="qty-badge qty-multi">× ${v.qty||1}</div>` : ""}
         <button class="btn-replace-photo" title="Replace photo" onclick="replacePhoto('${v.id}', event)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <div class="card-img-placeholder" style="display:${imgPath ? 'none' : 'flex'}">
           <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -2112,7 +2113,7 @@ render();
       </div>
     </div>
 
-    <div class="modal-qty-notes-row" style="grid-template-columns:1fr 1fr 6fr;">
+    <div class="modal-qty-notes-row" style="grid-template-columns:1fr 1fr 3fr;">
       <div class="add-modal-section modal-qty-field">
         <label>Qty</label>
         <input type="number" id="edit-qty" placeholder="1" step="1" min="1" value="1" style="-moz-appearance:textfield;appearance:textfield;">
@@ -2121,7 +2122,7 @@ render();
         <span class="broken-field-label">Archive</span>
         <input type="checkbox" id="edit-broken" class="broken-check-input">
         <div class="broken-check-box">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>
         </div>
       </label>
       <div class="add-modal-section modal-notes-field">
@@ -2565,12 +2566,8 @@ function saveAndExport() {
     const existingBrokenBadge = cardEl.querySelector('.broken-badge');
     const existingQtyBadge = cardEl.querySelector('.qty-badge');
     if (v.broken) {
-      if (!existingBrokenBadge) {
-        const badge = document.createElement('div');
-        badge.className = 'broken-badge';
-        badge.textContent = 'Archive';
-        cardEl.querySelector('.card-img').appendChild(badge);
-      }
+      const existingBrokenBadge = cardEl.querySelector('.broken-badge');
+      if (existingBrokenBadge) existingBrokenBadge.remove();
       if (!cardEl.querySelector('.archived-overlay')) {
         const overlay = document.createElement('div');
         overlay.className = 'archived-overlay';
@@ -2579,6 +2576,7 @@ function saveAndExport() {
       }
       if (existingQtyBadge) existingQtyBadge.style.display = 'none';
     } else {
+      const existingBrokenBadge = cardEl.querySelector('.broken-badge');
       if (existingBrokenBadge) existingBrokenBadge.remove();
       const overlay = cardEl.querySelector('.archived-overlay');
       if (overlay) overlay.remove();
